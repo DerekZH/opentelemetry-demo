@@ -2,11 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 version: "3.9"
-x-default-logging: &logging
-  driver: "json-file"
-  options:
-    max-size: "5m"
-    max-file: "2"
+x-default-logging-options: &default-logging-options
+  gelf-address: "udp://192.168.65.254:12201"
 
 volumes:
   opensearch-data:
@@ -45,7 +42,11 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "accounting"
 
   # AdService
   adservice:
@@ -74,7 +75,11 @@ services:
     depends_on:
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "ad"
 
   # Cart service
   cartservice:
@@ -104,7 +109,11 @@ services:
         condition: service_started
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "cart"
 
   # Checkout service
   checkoutservice:
@@ -152,7 +161,11 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "checkout"
 
   # Currency service
   currencyservice:
@@ -179,7 +192,11 @@ services:
     depends_on:
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "currency"
 
   # Email service
   emailservice:
@@ -205,7 +222,11 @@ services:
     depends_on:
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "email"
 
   # Feature Flag service
   featureflagservice:
@@ -236,7 +257,11 @@ services:
     depends_on:
       ffs_postgres:
         condition: service_healthy
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "featureflag"
 
   # Fraud Detection service
   frauddetectionservice:
@@ -263,7 +288,11 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "frauddetection"
 
   # Frontend
   frontend:
@@ -317,39 +346,47 @@ services:
         condition: service_started
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "frontend"
 
   # Load Generator
-  loadgenerator:
-    image: ${IMAGE_NAME}:${IMAGE_VERSION}-loadgenerator
-    container_name: load-generator
-    build:
-      context: ./
-      dockerfile: ./src/loadgenerator/Dockerfile
-      cache_from:
-        - ${IMAGE_NAME}:${IMAGE_VERSION}-loadgenerator
-    deploy:
-      resources:
-        limits:
-          memory: 120M
-    restart: unless-stopped
-    ports:
-      - "${LOCUST_WEB_PORT}:${LOCUST_WEB_PORT}"
-    environment:
-      - LOCUST_WEB_PORT
-      - LOCUST_USERS
-      - LOCUST_HOST
-      - LOCUST_HEADLESS
-      - LOCUST_AUTOSTART
-      - OTEL_EXPORTER_OTLP_ENDPOINT
-      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
-      - OTEL_RESOURCE_ATTRIBUTES
-      - OTEL_SERVICE_NAME=loadgenerator
-      - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
-    depends_on:
-      frontend:
-        condition: service_started
-    logging: *logging
+  # loadgenerator:
+  #   image: ${IMAGE_NAME}:${IMAGE_VERSION}-loadgenerator
+  #   container_name: load-generator
+  #   build:
+  #     context: ./
+  #     dockerfile: ./src/loadgenerator/Dockerfile
+  #     cache_from:
+  #       - ${IMAGE_NAME}:${IMAGE_VERSION}-loadgenerator
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 120M
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${LOCUST_WEB_PORT}:${LOCUST_WEB_PORT}"
+  #   environment:
+  #     - LOCUST_WEB_PORT
+  #     - LOCUST_USERS
+  #     - LOCUST_HOST
+  #     - LOCUST_HEADLESS
+  #     - LOCUST_AUTOSTART
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT
+  #     - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+  #     - OTEL_RESOURCE_ATTRIBUTES
+  #     - OTEL_SERVICE_NAME=loadgenerator
+  #     - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+  #   depends_on:
+  #     frontend:
+  #       condition: service_started
+  #   logging:
+      # driver: gelf
+      # options:
+      #   <<: *default-logging-options
+      #   tag: "loadgenerator"
 
   # Payment service
   paymentservice:
@@ -376,7 +413,11 @@ services:
     depends_on:
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "payment"
 
   # Product Catalog service
   productcatalogservice:
@@ -404,7 +445,11 @@ services:
     depends_on:
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "productcatalog"
 
   # Quote service
   quoteservice:
@@ -433,7 +478,11 @@ services:
     depends_on:
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "quote"
 
   # Recommendation service
   recommendationservice:
@@ -468,7 +517,11 @@ services:
         condition: service_started
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "recommendation"
 
   # Frontend Nginx Proxy service
   nginx:
@@ -482,7 +535,7 @@ services:
       - frontend
       - fluentbit
       - otelcol
-      - loadgenerator
+      # - loadgenerator
     links:
       - fluentbit
     logging:
@@ -500,6 +553,22 @@ services:
     ports:
       - "24224:24224"
       - "24224:24224/udp"
+    depends_on:
+      - opensearch
+
+  logstash:
+    # image: docker.elastic.co/logstash/logstash:8.11.3
+    # using locally built version of docker image, to add logstash-output-opensearch plugin
+    image: logstash:latest
+    restart: always
+    container_name: logstash
+    volumes:
+      - ./src/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./src/logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000"
+      # - "8081:8081" # used to test http input connection
+      - 12201:12201/udp
     depends_on:
       - opensearch
 
@@ -528,7 +597,11 @@ services:
     depends_on:
       otelcol:
         condition: service_started
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "shipping"
 
   # ******************
   # Dependent Services
@@ -552,7 +625,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "ffs_postgres"
 
   # Kafka used by Checkout, Accounting, and Fraud Detection services
   kafka:
@@ -581,7 +658,11 @@ services:
       interval: 5s
       timeout: 10s
       retries: 10
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "kafka"
 
   # Redis used by Cart service
   redis-cart:
@@ -595,7 +676,11 @@ services:
     restart: unless-stopped
     ports:
       - "${REDIS_PORT}"
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "redis-cart"
 
   # ********************
   # Telemetry Components
@@ -629,7 +714,11 @@ services:
       - ES_USERNAME=admin
       - ES_PASSWORD=admin
       - ES_TLS_SKIP_HOST_VERIFY=true
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "jaeger"
     depends_on:
       - opensearch
 
@@ -665,7 +754,11 @@ services:
       - ./src/grafana/provisioning/:/etc/grafana/provisioning/
     ports:
       - "${GRAFANA_SERVICE_PORT}:${GRAFANA_SERVICE_PORT}"
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "grafana"
 
   # OpenTelemetry Collector
   otelcol:
@@ -693,7 +786,11 @@ services:
     depends_on:
       - jaeger-agent
       - data-prepper
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "otelcol"
     environment:
       - ENVOY_PORT
 
@@ -719,7 +816,11 @@ services:
           memory: 300M
     ports:
       - "${PROMETHEUS_SERVICE_PORT}:${PROMETHEUS_SERVICE_PORT}"
-    logging: *logging
+    logging:
+      driver: gelf
+      options:
+        <<: *default-logging-options
+        tag: "prometheus"
 
   # OpenSearch store - engine
   opensearch:
@@ -744,7 +845,6 @@ services:
     ports:
       - 9200:9200
       - 9600:9600
-    logging: *logging
     expose:
       - "9200"
     healthcheck:
@@ -775,7 +875,6 @@ services:
       - "21890"
       - "21891"
       - "21892"
-    logging: *logging
     depends_on:
       - opensearch
 
