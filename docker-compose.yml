@@ -83,7 +83,8 @@ services:
 
   # Cart service
   cartservice:
-    image: ${IMAGE_NAME}:${IMAGE_VERSION}-cartservice
+    # image: ${IMAGE_NAME}:${IMAGE_VERSION}-cartservice
+    image: otel_cart_local:latest
     container_name: cart-service
     build:
       context: ./
@@ -104,6 +105,7 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES
       - OTEL_SERVICE_NAME=cartservice
       - ASPNETCORE_URLS=http://*:${CART_SERVICE_PORT}
+      - FEATURE_FLAG_GRPC_SERVICE_ADDR
     depends_on:
       redis-cart:
         condition: service_started
@@ -230,7 +232,8 @@ services:
 
   # Feature Flag service
   featureflagservice:
-    image: ${IMAGE_NAME}:${IMAGE_VERSION}-featureflagservice
+    # image: ${IMAGE_NAME}:${IMAGE_VERSION}-featureflagservice
+    image: featureflagservice_local:latest
     container_name: feature-flag-service
     build:
       context: ./
@@ -625,6 +628,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    ports:
+      - "5432:5432"
     logging:
       driver: gelf
       options:
