@@ -299,7 +299,8 @@ services:
 
   # Frontend
   frontend:
-    image: ${IMAGE_NAME}:${IMAGE_VERSION}-frontend
+    # image: ${IMAGE_NAME}:${IMAGE_VERSION}-frontend
+    image: otel_frontend_local:latest
     container_name: frontend
     build:
       context: ./
