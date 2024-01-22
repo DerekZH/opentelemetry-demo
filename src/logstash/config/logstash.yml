@@ -1,0 +1,38 @@
+# logstash.yml
+---
+## Node Settings
+# The name of the Logstash instance.
+node.name: logstash-node-1
+
+## Paths Settings
+# The directory where Logstash should store its logs.
+path.logs: /var/log/logstash
+
+## Pipeline Settings
+# The number of workers that will, in parallel, execute the filter and output stages of your pipeline.
+pipeline.workers: 2
+# The maximum number of events an individual worker thread will collect from inputs before attempting to execute its filters and outputs.
+pipeline.batch.size: 125
+# How long in milliseconds to wait for a full batch of events before processing the partial batch.
+pipeline.batch.delay: 50
+
+## HTTP API Settings
+# By default, Logstash runs an HTTP API for monitoring; you can disable it by setting 'http.enabled' to false.
+http.enabled: true
+http.host: "127.0.0.1"
+http.port: 9600
+
+## Logging Settings
+# Adjust Logstash's logging level.
+log.level: info
+
+# Enable and specify log file rotation.
+# log.rotate.size: 100mb
+# log.rotate.keep: 7
+
+## Other Settings
+# If you need to use a proxy server, you can specify it here.
+# http.proxy.host: "proxy-host"
+# http.proxy.port: 1234
+# http.proxy.username: "proxy-user"
+# http.proxy.password: "proxy-pass"

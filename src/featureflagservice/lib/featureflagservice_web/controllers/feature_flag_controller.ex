@@ -3,12 +3,15 @@
 
 
 defmodule FeatureflagserviceWeb.FeatureFlagController do
+  require Logger
+
   use FeatureflagserviceWeb, :controller
 
   alias Featureflagservice.FeatureFlags
   alias Featureflagservice.FeatureFlags.FeatureFlag
 
   def index(conn, _params) do
+    Logger.info("show index")
     featureflags = FeatureFlags.list_feature_flags()
     render(conn, "index.html", featureflags: featureflags)
   end
@@ -19,6 +22,7 @@ defmodule FeatureflagserviceWeb.FeatureFlagController do
   end
 
   def create(conn, %{"feature_flag" => feature_flag_params}) do
+    Logger.info("create something")
     case FeatureFlags.create_feature_flag(feature_flag_params) do
       {:ok, feature_flag} ->
         conn
@@ -31,7 +35,10 @@ defmodule FeatureflagserviceWeb.FeatureFlagController do
   end
 
   def show(conn, %{"id" => id}) do
+    Logger.info("Show action called with ID: #{id}")
     feature_flag = FeatureFlags.get_feature_flag!(id)
+    Logger.info("Retrieved feature flag: #{inspect(feature_flag)}")
+
     render(conn, "show.html", feature_flag: feature_flag)
   end
 

@@ -3,6 +3,7 @@
 
 
 defmodule FeatureflagserviceWeb.Endpoint do
+  require Logger
   use Phoenix.Endpoint, otp_app: :featureflagservice
 
   # The session will be stored in the cookie and signed,
@@ -46,5 +47,13 @@ defmodule FeatureflagserviceWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
+  plug :log_request
+  defp log_request(conn, _opts) do
+    Logger.info("Received request: #{conn.method} #{conn.request_path}")
+    conn
+  end
+
   plug FeatureflagserviceWeb.Router
+
+
 end
