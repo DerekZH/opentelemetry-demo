@@ -13,6 +13,8 @@ receivers:
 
 exporters:
   debug:
+    # adding verbosity "detailed" allows actual span logs to be shown in terminal logs
+    # verbosity: detailed
   otlp:
     endpoint: "jaeger:4317"
     tls:
@@ -72,3 +74,9 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlp/logs, debug]
+  telemetry:
+    logs:
+      level: "debug"
+  # extensions:
+  #   health_check:
+    

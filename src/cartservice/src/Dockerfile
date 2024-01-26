@@ -37,8 +37,12 @@ RUN \
 # https://mcr.microsoft.com/v2/dotnet/runtime-deps/tags/list
 FROM mcr.microsoft.com/dotnet/runtime-deps:7.0.4-alpine3.16
 
+
 WORKDIR /usr/src/app/
 COPY --from=builder /cartservice/ ./
+
+RUN apk update && \
+    apk add tcpdump
 
 EXPOSE ${CART_SERVICE_PORT}
 ENTRYPOINT [ "./cartservice" ]

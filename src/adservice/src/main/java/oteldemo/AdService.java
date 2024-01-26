@@ -199,9 +199,9 @@ public final class AdService {
       }
 
       // Flip a coin and fail 1/10th of the time if feature flag is enabled
-      if (random.nextInt(10) != 1) {
-        return false;
-      }
+      // if (random.nextInt(10) != 1) {
+      //   return false;
+      // }
 
       GetFlagResponse response =
           featureFlagServiceStub.getFlag(
