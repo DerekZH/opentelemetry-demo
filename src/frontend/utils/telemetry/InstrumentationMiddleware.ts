@@ -41,8 +41,17 @@ const InstrumentationMiddleware = (handler: NextApiHandler): NextApiHandler => {
     }
 
     if (request.query['sessionId'] != null) {
+      console.log("attribute sessionId to be set:", request.query['sessionId'])
       span.setAttribute(AttributeNames.SESSION_ID, request.query['sessionId']);
     }
+
+    console.log("Assembled Span:", {
+      spanId: span.spanContext().spanId,
+      traceId: span.spanContext().traceId,
+    });
+    
+    console.log("span itself is:", span)
+
 
     let httpStatus = 200;
     try {

@@ -121,6 +121,7 @@ public final class AdService {
   private static class AdServiceImpl extends oteldemo.AdServiceGrpc.AdServiceImplBase {
 
     private static final String ADSERVICE_FAIL_FEATURE_FLAG = "adServiceFailure";
+    private static final String DISCOUNT_ON_TELESCOPE_FEATURE_FLAG = "discountOnTelescope";
 
     private final FeatureFlagServiceBlockingStub featureFlagServiceStub;
 
@@ -138,6 +139,7 @@ public final class AdService {
     @Override
     public void getAds(AdRequest req, StreamObserver<AdResponse> responseObserver) {
       AdService service = AdService.getInstance();
+      ImmutableListMultimap<String, Ad> adsMap = createAdsMap(getDiscountOnTelescope());
 
       // get the current span in context
       Span span = Span.current();
@@ -151,20 +153,20 @@ public final class AdService {
         if (req.getContextKeysCount() > 0) {
           logger.info("Targeted ad request received for " + req.getContextKeysList());
           for (int i = 0; i < req.getContextKeysCount(); i++) {
-            Collection<Ad> ads = service.getAdsByCategory(req.getContextKeys(i));
+            Collection<Ad> ads = service.getAdsByCategory(req.getContextKeys(i), adsMap);
             allAds.addAll(ads);
           }
           adRequestType = AdRequestType.TARGETED;
           adResponseType = AdResponseType.TARGETED;
         } else {
           logger.info("Non-targeted ad request received, preparing random response.");
-          allAds = service.getRandomAds();
+          allAds = service.getRandomAds(adsMap);
           adRequestType = AdRequestType.NOT_TARGETED;
           adResponseType = AdResponseType.RANDOM;
         }
         if (allAds.isEmpty()) {
           // Serve random ads.
-          allAds = service.getRandomAds();
+          allAds = service.getRandomAds(adsMap);
           adResponseType = AdResponseType.RANDOM;
         }
         span.setAttribute("app.ads.count", allAds.size());
@@ -198,11 +200,6 @@ public final class AdService {
         return false;
       }
 
-      // Flip a coin and fail 1/10th of the time if feature flag is enabled
-      if (random.nextInt(10) != 1) {
-        return false;
-      }
-
       GetFlagResponse response =
           featureFlagServiceStub.getFlag(
               oteldemo.Demo.GetFlagRequest.newBuilder()
@@ -210,12 +207,75 @@ public final class AdService {
                   .build());
       return response.getFlag().getEnabled();
     }
+
+    private int getDiscountOnTelescope() {
+      if (featureFlagServiceStub == null) {
+        return 20;
+      }
+  
+      GetFlagResponse response =
+          featureFlagServiceStub.getFlag(
+              oteldemo.Demo.GetFlagRequest.newBuilder()
+                  .setName(DISCOUNT_ON_TELESCOPE_FEATURE_FLAG)
+                  .build());
+  
+      System.out.println("response.getFlag().getValue() is " + response.getFlag().getValue());
+      System.out.println("response is " + response);
+  
+      return response.getFlag().getValue();
+    }        
+
+    private ImmutableListMultimap<String, Ad> createAdsMap(int discountOnTelescope) {
+
+      Ad binoculars =
+          Ad.newBuilder()
+              .setRedirectUrl("/product/2ZYFJ3GM2N")
+              .setText(String.format("Roof Binoculars for sale. %d%% off.", discountOnTelescope))
+              .build();
+      Ad explorerTelescope =
+          Ad.newBuilder()
+              .setRedirectUrl("/product/66VCHSJNUP")
+              .setText(String.format("Starsense Explorer Refractor Telescope for sale. %d%% off.", discountOnTelescope))
+              .build();
+      Ad colorImager =
+          Ad.newBuilder()
+              .setRedirectUrl("/product/0PUK6V6EV0")
+              .setText(String.format("Solar System Color Imager for sale. %d%% off.", discountOnTelescope))
+              .build();
+      Ad opticalTube =
+          Ad.newBuilder()
+              .setRedirectUrl("/product/9SIQT8TOJO")
+              .setText(String.format("Optical Tube Assembly for sale. %d%% off.", discountOnTelescope))
+              .build();
+      Ad travelTelescope =
+          Ad.newBuilder()
+              .setRedirectUrl("/product/1YMWWN1N4O")
+              .setText(String.format(
+                  "Eclipsmart Travel Refractor Telescope for sale.  %d%% off.", discountOnTelescope))
+              .build();
+      Ad solarFilter =
+          Ad.newBuilder()
+              .setRedirectUrl("/product/6E92ZMYYFZ")
+              .setText(String.format("Solar Filter for sale.  %d%% off.", discountOnTelescope))
+              .build();
+      Ad cleaningKit =
+          Ad.newBuilder()
+              .setRedirectUrl("/product/L9ECAV7KIM")
+              .setText(String.format("Lens Cleaning Kit for sale.  %d%% off.", discountOnTelescope))
+              .build();
+      return ImmutableListMultimap.<String, Ad>builder()
+          .putAll("binoculars", binoculars)
+          .putAll("telescopes", explorerTelescope)
+          .putAll("accessories", colorImager, solarFilter, cleaningKit)
+          .putAll("assembly", opticalTube)
+          .putAll("travel", travelTelescope)
+          // Keep the books category free of ads to ensure the random code branch is tested
+          .build();
+    }    
   }
 
-  private static final ImmutableListMultimap<String, Ad> adsMap = createAdsMap();
-
   @WithSpan("getAdsByCategory")
-  private Collection<Ad> getAdsByCategory(@SpanAttribute("app.ads.category") String category) {
+  private Collection<Ad> getAdsByCategory(@SpanAttribute("app.ads.category") String category, ImmutableListMultimap<String, Ad> adsMap) {
     Collection<Ad> ads = adsMap.get(category);
     Span.current().setAttribute("app.ads.count", ads.size());
     return ads;
@@ -223,7 +283,7 @@ public final class AdService {
 
   private static final Random random = new Random();
 
-  private List<Ad> getRandomAds() {
+  private List<Ad> getRandomAds(ImmutableListMultimap<String, Ad> adsMap) {
 
     List<Ad> ads = new ArrayList<>(MAX_ADS_TO_SERVE);
 
@@ -257,52 +317,7 @@ public final class AdService {
     }
   }
 
-  private static ImmutableListMultimap<String, Ad> createAdsMap() {
-    Ad binoculars =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/2ZYFJ3GM2N")
-            .setText("Roof Binoculars for sale. 50% off.")
-            .build();
-    Ad explorerTelescope =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/66VCHSJNUP")
-            .setText("Starsense Explorer Refractor Telescope for sale. 20% off.")
-            .build();
-    Ad colorImager =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/0PUK6V6EV0")
-            .setText("Solar System Color Imager for sale. 30% off.")
-            .build();
-    Ad opticalTube =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/9SIQT8TOJO")
-            .setText("Optical Tube Assembly for sale. 10% off.")
-            .build();
-    Ad travelTelescope =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/1YMWWN1N4O")
-            .setText(
-                "Eclipsmart Travel Refractor Telescope for sale. Buy one, get second kit for free")
-            .build();
-    Ad solarFilter =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/6E92ZMYYFZ")
-            .setText("Solar Filter for sale. Buy two, get third one for free")
-            .build();
-    Ad cleaningKit =
-        Ad.newBuilder()
-            .setRedirectUrl("/product/L9ECAV7KIM")
-            .setText("Lens Cleaning Kit for sale. Buy one, get second one for free")
-            .build();
-    return ImmutableListMultimap.<String, Ad>builder()
-        .putAll("binoculars", binoculars)
-        .putAll("telescopes", explorerTelescope)
-        .putAll("accessories", colorImager, solarFilter, cleaningKit)
-        .putAll("assembly", opticalTube)
-        .putAll("travel", travelTelescope)
-        // Keep the books category free of ads to ensure the random code branch is tested
-        .build();
-  }
+
 
   /** Main launches the server from the command line. */
   public static void main(String[] args) throws IOException, InterruptedException {

@@ -56,7 +56,10 @@ defmodule Featureflagservice.FeatureFlags do
       nil
 
   """
+
+
   def get_feature_flag_by_name(name), do: Repo.get_by(FeatureFlag, name: name)
+
 
   @doc """
   Creates a feature_flag.
@@ -76,7 +79,9 @@ defmodule Featureflagservice.FeatureFlags do
       OpenTelemetry.Tracer.set_attributes(%{
         "app.featureflag.name" => attrs["name"],
         "app.featureflag.description" => attrs["description"],
-        "app.featureflag.enabled" => attrs["enabled"]
+        "app.featureflag.enabled" => attrs["enabled"],
+        "app.featureflag.value" => attrs["value"]
+
       })
       %FeatureFlag{}
       |> FeatureFlag.changeset(attrs)

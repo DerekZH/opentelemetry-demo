@@ -29,6 +29,10 @@
   <%= text_input f, :description %>
   <%= error_tag f, :description %>
 
+  <%= label f, :value %>
+  <%= text_input f, :value, type: "number", step: "1" %>
+  <%= error_tag f, :value %>
+
   <div class="float-right">
     <%= checkbox f, :enabled %>
     <%= label f, :enabled, class: "label-inline" %>

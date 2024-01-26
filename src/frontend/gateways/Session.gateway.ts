@@ -18,7 +18,7 @@ const SessionGateway = () => ({
   getSession(): ISession {
     if (typeof window === 'undefined') return defaultSession;
     const sessionString = localStorage.getItem(sessionKey);
-
+    console.log("sessionString inside SessionGateway is:", sessionString)
     if (!sessionString) localStorage.setItem(sessionKey, JSON.stringify(defaultSession));
 
     return JSON.parse(sessionString || JSON.stringify(defaultSession)) as ISession;
