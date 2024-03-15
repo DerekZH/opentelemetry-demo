@@ -277,6 +277,7 @@ message Flag {
   string name = 1;
   string description = 2;
   bool enabled = 3;
+  int32 value = 6;
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;
 }
@@ -293,6 +294,7 @@ message CreateFlagRequest {
   string name = 1;
   string description = 2;
   bool enabled = 3;
+  int32 value = 4;
 }
 
 message CreateFlagResponse {

@@ -35,17 +35,20 @@ get_flag(Ctx, #{name := Name}) ->
         #{'__struct__' := 'Elixir.Featureflagservice.FeatureFlags.FeatureFlag',
           description := Description,
           enabled := Enabled,
+          value := Value, 
           inserted_at := CreatedAt,
           updated_at := UpdatedAt
          } ->
             ?set_attribute('app.featureflag.name', Name),
             ?set_attribute('app.featureflag.enabled', Enabled),
+            ?set_attribute('app.featureflag.value', Value), 
             {ok, Epoch} = 'Elixir.NaiveDateTime':from_erl({{1970, 1, 1}, {0, 0, 0}}),
             CreatedAtSeconds = 'Elixir.NaiveDateTime':diff(CreatedAt, Epoch),
             UpdatedAtSeconds = 'Elixir.NaiveDateTime':diff(UpdatedAt, Epoch),
             Flag = #{name => Name,
                      description => Description,
                      enabled => Enabled,
+                     value => Value,
                      created_at => #{seconds => CreatedAtSeconds, nanos => 0},
                      updated_at => #{seconds => UpdatedAtSeconds, nanos => 0}},
             {ok, #{flag => Flag}, Ctx}

@@ -4,6 +4,7 @@
 version: "3.9"
 x-default-logging-options: &default-logging-options
   gelf-address: "udp://192.168.65.254:12201"
+  # gelf-address: "udp://logstash:12201"
 
 volumes:
   opensearch-data:
@@ -50,7 +51,8 @@ services:
 
   # AdService
   adservice:
-    image: ${IMAGE_NAME}:${IMAGE_VERSION}-adservice
+    # image: ${IMAGE_NAME}:${IMAGE_VERSION}-adservice
+    image: otel_adservice_local:latest
     container_name: ad-service
     build:
       context: ./
@@ -115,6 +117,7 @@ services:
       driver: gelf
       options:
         <<: *default-logging-options
+        # gelf-address: "tcp://192.168.65.254:12201"
         tag: "cart"
 
   # Checkout service
@@ -247,7 +250,7 @@ services:
     restart: unless-stopped
     ports:
       - "${FEATURE_FLAG_SERVICE_PORT}:${FEATURE_FLAG_SERVICE_PORT}" # Feature Flag Service UI
-      - "${FEATURE_FLAG_GRPC_SERVICE_PORT}" # Feature Flag Service gRPC API
+      - "${FEATURE_FLAG_GRPC_SERVICE_PORT}:${FEATURE_FLAG_GRPC_SERVICE_PORT}" # Feature Flag Service gRPC API
     environment:
       - FEATURE_FLAG_SERVICE_PORT
       - FEATURE_FLAG_GRPC_SERVICE_PORT
@@ -256,15 +259,23 @@ services:
       - OTEL_SERVICE_NAME=featureflagservice
       - DATABASE_URL=ecto://ffs:ffs@ffs_postgres:5432/ffs
     healthcheck:
-      test: ["CMD", "curl", "-H", "baggage: synthetic_request=true", "-f", "http://localhost:${FEATURE_FLAG_SERVICE_PORT}"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "-H",
+          "baggage: synthetic_request=true",
+          "-f",
+          "http://localhost:${FEATURE_FLAG_SERVICE_PORT}",
+        ]
     depends_on:
       ffs_postgres:
         condition: service_healthy
-    logging:
-      driver: gelf
-      options:
-        <<: *default-logging-options
-        tag: "featureflag"
+    # logging:
+    #   driver: gelf
+    #   options:
+    #     <<: *default-logging-options
+    #     tag: "featureflag"
 
   # Fraud Detection service
   frauddetectionservice:
@@ -387,10 +398,10 @@ services:
   #     frontend:
   #       condition: service_started
   #   logging:
-      # driver: gelf
-      # options:
-      #   <<: *default-logging-options
-      #   tag: "loadgenerator"
+  # driver: gelf
+  # options:
+  #   <<: *default-logging-options
+  #   tag: "loadgenerator"
 
   # Payment service
   paymentservice:
@@ -500,7 +511,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 500M               # This is high to enable supporting the recommendationCache feature flag use case
+          memory: 500M # This is high to enable supporting the recommendationCache feature flag use case
     restart: unless-stopped
     ports:
       - "${RECOMMENDATION_SERVICE_PORT}"
@@ -573,6 +584,7 @@ services:
       - "5000:5000"
       # - "8081:8081" # used to test http input connection
       - 12201:12201/udp
+      # - 12201:12201/tcp
     depends_on:
       - opensearch
 
@@ -664,11 +676,11 @@ services:
       interval: 5s
       timeout: 10s
       retries: 10
-    logging:
-      driver: gelf
-      options:
-        <<: *default-logging-options
-        tag: "kafka"
+    # logging:
+    #   driver: gelf
+    #   options:
+    #     <<: *default-logging-options
+    #     tag: "kafka"
 
   # Redis used by Cart service
   redis-cart:
@@ -768,7 +780,8 @@ services:
 
   # OpenTelemetry Collector
   otelcol:
-    image: otel/opentelemetry-collector-contrib:0.88.0
+    # image: otel/opentelemetry-collector-contrib:0.88.0
+    image: otel/opentelemetry-collector-contrib:0.92.0
     container_name: otel-col
     deploy:
       resources:
@@ -783,20 +796,23 @@ services:
     volumes:
       - ./src/otelcollector/otelcol-config.yml:/etc/otelcol-config.yml
       - ./src/otelcollector/otelcol-config-extras.yml:/etc/otelcol-config-extras.yml
+      # - ./src/otelcollector/otelcol-config.yml:/etc/otelcol-contrib/config.yaml
     ports:
       - "4317" # OTLP over gRPC receiver
       - "4318:4318" # OTLP over HTTP receiver
       - "13133:13133" # health check port
       - "9464" # Prometheus exporter
       - "8888" # metrics endpoint
+      - 55679:55679 # zpages extension
+
     depends_on:
       - jaeger-agent
       - data-prepper
-    logging:
-      driver: gelf
-      options:
-        <<: *default-logging-options
-        tag: "otelcol"
+    # logging:
+    #   driver: gelf
+    #   options:
+    #     <<: *default-logging-options
+    #     tag: "otelcol"
     environment:
       - ENVOY_PORT
 
@@ -822,11 +838,11 @@ services:
           memory: 300M
     ports:
       - "${PROMETHEUS_SERVICE_PORT}:${PROMETHEUS_SERVICE_PORT}"
-    logging:
-      driver: gelf
-      options:
-        <<: *default-logging-options
-        tag: "prometheus"
+    # logging:
+    #   driver: gelf
+    #   options:
+    #     <<: *default-logging-options
+    #     tag: "prometheus"
 
   # OpenSearch store - engine
   opensearch:

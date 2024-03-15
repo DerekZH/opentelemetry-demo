@@ -8,6 +8,7 @@ defmodule Featureflagservice.Repo.Migrations.CreateFeatureflags do
       add :name, :string
       add :description, :string
       add :enabled, :boolean, default: false, null: false
+      add :value, :integer, default: 0, null: true
 
       timestamps()
     end
@@ -37,6 +38,12 @@ defmodule Featureflagservice.Repo.Migrations.CreateFeatureflags do
       name: "cartServiceFailure",
       description: "Fail cart service requests sporadically",
       enabled: false})
+
+      repo().insert(%Featureflagservice.FeatureFlags.FeatureFlag{
+        name: "discountOnTelescope",
+        description: "Sets the percentage discount for Ads",
+        enabled: false,
+        value: 20})
   end
 
   defp execute_down do

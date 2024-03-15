@@ -49,7 +49,11 @@ defmodule FeatureflagserviceWeb.Endpoint do
   plug Plug.Session, @session_options
   plug :log_request
   defp log_request(conn, _opts) do
-    Logger.info("Received request: #{conn.method} #{conn.request_path}")
+    Logger.info("""
+    Received request: #{conn.method} #{conn.request_path}
+    Headers: #{inspect(conn.req_headers)}
+    Query Params: #{inspect(Plug.Conn.fetch_query_params(conn).params)}
+    """)
     conn
   end
 
